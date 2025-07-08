@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:16
+    env_file: .env
+    container_name: purchases-db
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  app:
+    build: .
+    env_file:
+      - .env
+    container_name: purchases-app
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    depends_on:
+      - postgres
