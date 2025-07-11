@@ -1,32 +1,60 @@
 package cache
 
 import (
+	"container/list"
 	"context"
 
 	"wb-L0/structs"
 )
 
-type MemoryCache struct {
-	Data map[string]*structs.Order
+type entry struct {
+	key   string
+	value *structs.Order
 }
 
+type MemoryCache struct {
+	capacity int
+	cacheMap map[string]*list.Element
+	list     *list.List
+}
+
+// NewMemoryCache creates a new LRU cache with specified capacity
 func NewMemoryCache() *MemoryCache {
 	return &MemoryCache{
-		Data: make(map[string]*structs.Order),
+		capacity: 10,
+		cacheMap: make(map[string]*list.Element),
+		list:     list.New(),
 	}
 }
 
 func (c *MemoryCache) PutOrder(_ context.Context, key string, order *structs.Order) error {
-	c.Data[key] = order
+	if elem, exists := c.cacheMap[key]; exists {
+		elem.Value.(*entry).value = order
+		c.list.MoveToFront(elem)
+		return nil
+	}
+
+	newEntry := &entry{key: key, value: order}
+	newElem := c.list.PushFront(newEntry)
+	c.cacheMap[key] = newElem
+
+	if c.list.Len() > c.capacity {
+		tail := c.list.Back()
+		if tail != nil {
+			keyToRemove := tail.Value.(*entry).key
+			delete(c.cacheMap, keyToRemove)
+			c.list.Remove(tail)
+		}
+	}
 	return nil
 }
 
 func (c *MemoryCache) GetOrder(_ context.Context, key string) (*structs.Order, error) {
-	value, ok := c.Data[key]
-	if !ok {
-		return nil, ErrCacheMiss{
-			Key: key,
-		}
+	elem, exists := c.cacheMap[key]
+	if !exists {
+		return nil, ErrCacheMiss{Key: key}
 	}
-	return value, nil
+
+	c.list.MoveToFront(elem)
+	return elem.Value.(*entry).value, nil
 }
