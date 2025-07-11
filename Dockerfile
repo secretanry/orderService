@@ -13,5 +13,6 @@ FROM alpine:3.21
 WORKDIR /app
 RUN apk update && apk upgrade && apk add --no-cache
 COPY --from=builder /app/go-binary /app/go-binary
+COPY --from=builder /app/templates ./templates
 COPY docs/swagger.json docs/swagger.json
 CMD ["/app/go-binary"]
