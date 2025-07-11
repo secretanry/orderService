@@ -25,7 +25,8 @@ func (s *Server) Init(errChan chan error) error {
 		return fmt.Errorf("run mode %s not supported", config.GetConfig().RunMode)
 	}
 	r := gin.Default()
-	routing.MountPurchasesAPI(r)
+	routing.MountSystemRoutes(r)
+	routing.MountPurchasesRoutes(r)
 	addr := fmt.Sprintf("0.0.0.0:%d", config.GetConfig().AppPort)
 	s.Serv = &http.Server{
 		Addr:    addr,

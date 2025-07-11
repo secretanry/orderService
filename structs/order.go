@@ -14,6 +14,7 @@ type Order struct {
 	Shardkey          string   `json:"shardkey"`
 	SmId              int      `json:"sm_id"`
 	DateCreated       string   `json:"date_created"`
+	OofShard          string   `json:"oof_shard"`
 }
 
 type Delivery struct {

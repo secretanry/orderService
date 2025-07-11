@@ -1,9 +1,13 @@
-package models
+package pg_models
 
-import "wb-L0/modules/pg"
+import (
+	"gorm.io/gorm"
+
+	"wb-L0/modules/pg"
+)
 
 type OrderPayment struct {
-	Id           int64  `gorm:"primary_key;auto_increment"`
+	Id           int64  `gorm:"primaryKey;autoIncrement"`
 	OrderId      int64  `gorm:"type:int;not null"`
 	Transaction  string `gorm:"type:varchar(50);not null"`
 	RequestId    string `gorm:"type:varchar(50)"`
@@ -23,4 +27,15 @@ func (OrderPayment) TableName() string {
 
 func init() {
 	pg.RegisterModel(new(OrderPayment))
+}
+
+func InsertOrderPayment(db *gorm.DB, orderPayment *OrderPayment) error {
+	err := db.Create(orderPayment).Error
+	return err
+}
+
+func GetOrderPaymentByOrderId(db *gorm.DB, orderId int64) (*OrderPayment, error) {
+	orderPayment := new(OrderPayment)
+	err := db.Where(&OrderPayment{OrderId: orderId}).First(orderPayment).Error
+	return orderPayment, err
 }

@@ -1,9 +1,13 @@
-package models
+package pg_models
 
-import "wb-L0/modules/pg"
+import (
+	"gorm.io/gorm"
+
+	"wb-L0/modules/pg"
+)
 
 type OrderItem struct {
-	Id          int64  `gorm:"primary_key;auto_increment"`
+	Id          int64  `gorm:"primaryKey;autoIncrement"`
 	OrderId     int64  `gorm:"type:int;not null"`
 	ChrtId      int64  `gorm:"type:int;not null"`
 	TrackNumber string `gorm:"type:varchar(50);not null"`
@@ -24,4 +28,18 @@ func (OrderItem) TableName() string {
 
 func init() {
 	pg.RegisterModel(new(OrderItem))
+}
+
+func InsertOrderItem(db *gorm.DB, orderItem *OrderItem) error {
+	err := db.Create(orderItem).Error
+	return err
+}
+
+func GetOrderItemsByOrderId(db *gorm.DB, oid int64) ([]*OrderItem, error) {
+	items := make([]*OrderItem, 0)
+	err := db.Where(&OrderItem{OrderId: oid}).Find(&items).Error
+	if err != nil {
+		return nil, err
+	}
+	return items, nil
 }

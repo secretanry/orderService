@@ -11,8 +11,7 @@ import (
 )
 
 var (
-	models   []interface{}
-	globalDb *gorm.DB
+	models []interface{}
 )
 
 type Postgres struct {
@@ -28,7 +27,6 @@ func (p *Postgres) Init(_ chan error) error {
 		return fmt.Errorf("failed to connect to PostgreSQL: %v", err)
 	}
 	p.Db = db
-	globalDb = db
 	err = db.AutoMigrate(models...)
 	if err != nil {
 		return fmt.Errorf("failed to migrate models: %v", err)
@@ -41,15 +39,15 @@ func (p *Postgres) SuccessfulMessage() string {
 }
 
 func (p *Postgres) Shutdown(_ context.Context) error {
-	db, err := globalDb.DB()
+	db, err := p.Db.DB()
 	if err != nil {
 		return fmt.Errorf("failed to get DB connection: %v", err)
 	}
 	return db.Close()
 }
 
-func GetEngine(ctx context.Context) *gorm.DB {
-	return globalDb.WithContext(ctx)
+func (p *Postgres) GetEngine(ctx context.Context) *gorm.DB {
+	return p.Db.WithContext(ctx)
 }
 
 func RegisterModel(model interface{}) {

@@ -14,8 +14,7 @@ func ApiContextMiddleware() gin.HandlerFunc {
 	}
 }
 
-func MountPurchasesAPI(r *gin.Engine) {
-	r.Use(ApiContextMiddleware())
+func MountPurchasesRoutes(r *gin.Engine) {
 	api := r.Group("/api")
 	order := api.Group("/order")
 	order.GET("/:order_id", handlers.GetPurchase)
