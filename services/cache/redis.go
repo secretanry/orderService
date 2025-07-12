@@ -47,3 +47,8 @@ func (c *RedisCache) GetOrder(ctx context.Context, key string) (*structs.Order, 
 	}
 	return &order, nil
 }
+
+// HealthCheck performs a health check on Redis
+func (c *RedisCache) HealthCheck(ctx context.Context) error {
+	return c.redisConn.Client.Ping(ctx).Err()
+}

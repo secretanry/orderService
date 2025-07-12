@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
@@ -20,6 +21,7 @@ import (
 	"github.com/IBM/sarama"
 
 	"wb-L0/models/pg_models"
+	"wb-L0/modules/monitoring"
 	"wb-L0/modules/pg"
 	redispkg "wb-L0/modules/redis"
 	"wb-L0/routing"
@@ -806,7 +808,19 @@ func (suite *IntegrationTestSuite) TestKafkaPerformance() {
 	assert.Greater(suite.T(), rate, 1.0, "Should send at least 1 message per second")
 }
 
-// TestMain runs the test suite
+func TestMain(m *testing.M) {
+	// Reset monitoring state before running tests
+	monitoring.ResetForTesting()
+
+	monitoringInstance := &monitoring.Monitoring{}
+	errChan := make(chan error, 1)
+	if err := monitoringInstance.Init(errChan); err != nil {
+		panic(err)
+	}
+	os.Exit(m.Run())
+}
+
+// TestIntegrationSuite runs the test suite
 func TestIntegrationSuite(t *testing.T) {
 	suite.Run(t, new(IntegrationTestSuite))
 }

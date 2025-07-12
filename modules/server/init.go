@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"wb-L0/modules/config"
+	"wb-L0/modules/monitoring"
 	"wb-L0/routing"
 )
 
@@ -25,6 +26,10 @@ func (s *Server) Init(errChan chan error) error {
 		return fmt.Errorf("run mode %s not supported", config.GetConfig().RunMode)
 	}
 	r := gin.Default()
+
+	// Add monitoring middleware
+	r.Use(monitoring.MonitoringMiddleware())
+
 	routing.MountSystemRoutes(r)
 	routing.MountPurchasesRoutes(r)
 	routing.MountFrontRoutes(r)

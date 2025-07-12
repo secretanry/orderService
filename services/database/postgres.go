@@ -9,6 +9,7 @@ import (
 
 	"wb-L0/models/pg_models"
 	"wb-L0/modules/convert"
+	"wb-L0/modules/monitoring"
 	"wb-L0/modules/pg"
 	"wb-L0/structs"
 )
@@ -116,6 +117,12 @@ func (p *PostgresDatabase) InsertOrder(ctx context.Context, order *structs.Order
 }
 
 func (p *PostgresDatabase) GetOrderById(ctx context.Context, oid string) (*structs.Order, error) {
+	start := time.Now()
+	defer func() {
+		monitoring.ObserveDatabaseQueryDuration("select", "orders", time.Since(start))
+		monitoring.IncrementDatabaseQueries("select", "orders")
+	}()
+
 	order, err := pg_models.GetOrderById(p.db.GetEngine(ctx), oid)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -131,4 +138,14 @@ func (p *PostgresDatabase) GetOrderById(ctx context.Context, oid string) (*struc
 		return nil, ErrInternal{Err: err.Error()}
 	}
 	return convert.PgToApiOrder(order), nil
+}
+
+// HealthCheck performs a health check on the database
+func (p *PostgresDatabase) HealthCheck(ctx context.Context) error {
+	// Simple ping query to check database connectivity
+	sqlDB, err := p.db.GetEngine(ctx).DB()
+	if err != nil {
+		return err
+	}
+	return sqlDB.PingContext(ctx)
 }

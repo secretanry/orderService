@@ -1,0 +1,282 @@
+{
+  "id": null,
+  "title": "WB-L0 Service Dashboard",
+  "tags": ["wb-l0", "go", "microservice", "monitoring"],
+  "style": "dark",
+  "timezone": "browser",
+  "refresh": "5s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "HTTP Request Rate",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "targets": [
+        {
+          "expr": "rate(http_requests_total[5m])",
+          "legendFormat": "{{method}} {{endpoint}}",
+          "refId": "A"
+        }
+      ],
+      "yAxes": [
+        {
+          "label": "Requests/sec",
+          "min": 0
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "HTTP Request Duration (95th percentile)",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
+          "legendFormat": "95th percentile",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.50, rate(http_request_duration_seconds_bucket[5m]))",
+          "legendFormat": "50th percentile",
+          "refId": "B"
+        }
+      ],
+      "yAxes": [
+        {
+          "label": "Duration (seconds)",
+          "min": 0
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Cache Hit Rate",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 8},
+      "targets": [
+        {
+          "expr": "rate(cache_hits_total[5m]) / (rate(cache_hits_total[5m]) + rate(cache_misses_total[5m])) * 100",
+          "legendFormat": "Cache Hit Rate %",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "steps": [
+              {"color": "red", "value": 0},
+              {"color": "yellow", "value": 70},
+              {"color": "green", "value": 90}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Database Query Rate",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+      "targets": [
+        {
+          "expr": "rate(database_queries_total[5m])",
+          "legendFormat": "{{operation}} {{table}}",
+          "refId": "A"
+        }
+      ],
+      "yAxes": [
+        {
+          "label": "Queries/sec",
+          "min": 0
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Order Retrieval Rate",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 8},
+      "targets": [
+        {
+          "expr": "rate(order_retrieval_total[5m])",
+          "legendFormat": "Orders/sec",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "min": 0
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "Service Health Status",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 8},
+      "targets": [
+        {
+          "expr": "up{job=\"wb-l0-health\"}",
+          "legendFormat": "Service Status",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "steps": [
+              {"color": "red", "value": 0},
+              {"color": "green", "value": 1}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 7,
+      "title": "HTTP Status Codes",
+      "type": "stat",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total[5m])) by (status)",
+          "legendFormat": "{{status}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "min": 0
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "Database Query Duration",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, rate(database_query_duration_seconds_bucket[5m]))",
+          "legendFormat": "95th percentile - {{operation}} {{table}}",
+          "refId": "A"
+        }
+      ],
+      "yAxes": [
+        {
+          "label": "Duration (seconds)",
+          "min": 0
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Kafka Messages Processed",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 20},
+      "targets": [
+        {
+          "expr": "rate(kafka_messages_processed_total[5m])",
+          "legendFormat": "{{topic}} - {{status}}",
+          "refId": "A"
+        }
+      ],
+      "yAxes": [
+        {
+          "label": "Messages/sec",
+          "min": 0
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "Error Rate",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 28},
+      "targets": [
+        {
+          "expr": "rate(http_requests_total{status=~\"5..\"}[5m])",
+          "legendFormat": "5xx Errors",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(http_requests_total{status=~\"4..\"}[5m])",
+          "legendFormat": "4xx Errors",
+          "refId": "B"
+        }
+      ],
+      "yAxes": [
+        {
+          "label": "Errors/sec",
+          "min": 0
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "title": "Cache Operations",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 28},
+      "targets": [
+        {
+          "expr": "rate(cache_hits_total[5m])",
+          "legendFormat": "Cache Hits",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(cache_misses_total[5m])",
+          "legendFormat": "Cache Misses",
+          "refId": "B"
+        }
+      ],
+      "yAxes": [
+        {
+          "label": "Operations/sec",
+          "min": 0
+        }
+      ]
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "endpoint",
+        "type": "query",
+        "query": "label_values(http_requests_total, endpoint)",
+        "refresh": 2,
+        "includeAll": true,
+        "multi": true
+      },
+      {
+        "name": "method",
+        "type": "query",
+        "query": "label_values(http_requests_total, method)",
+        "refresh": 2,
+        "includeAll": true,
+        "multi": true
+      }
+    ]
+  },
+  "annotations": {
+    "list": [
+      {
+        "name": "Deployments",
+        "datasource": "Prometheus",
+        "expr": "changes(up[1m]) > 0",
+        "iconColor": "rgba(255, 96, 96, 1)",
+        "enable": true
+      }
+    ]
+  }
+} 

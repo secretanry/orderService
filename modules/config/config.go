@@ -28,6 +28,8 @@ type Config struct {
 	RedisPort          int    `mapstructure:"REDIS_PORT"`
 	RedisPass          string `mapstructure:"REDIS_PASS"`
 	RedisDatabase      int    `mapstructure:"REDIS_DATABASE"`
+	MetricsPort        int    `mapstructure:"METRICS_PORT"`
+	LogLevel           string `mapstructure:"LOG_LEVEL"`
 }
 
 func (c *Config) Init(_ chan error) error {

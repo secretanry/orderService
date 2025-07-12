@@ -11,6 +11,7 @@ var dbInstance Database
 type Database interface {
 	InsertOrder(context.Context, *structs.Order) error
 	GetOrderById(ctx context.Context, oid string) (*structs.Order, error)
+	HealthCheck(ctx context.Context) error
 }
 
 func SetDatabase(database Database) {

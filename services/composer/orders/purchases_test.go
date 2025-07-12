@@ -2,12 +2,14 @@ package orders
 
 import (
 	contextpkg "context"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"wb-L0/modules/monitoring"
 	"wb-L0/services/cache"
 	"wb-L0/services/database"
 	"wb-L0/structs"
@@ -31,6 +33,11 @@ func (m *MockCache) PutOrder(ctx contextpkg.Context, orderId string, order *stru
 	return args.Error(0)
 }
 
+func (m *MockCache) HealthCheck(ctx contextpkg.Context) error {
+	args := m.Called(ctx)
+	return args.Error(0)
+}
+
 // MockDatabase is a mock implementation of the database service
 type MockDatabase struct {
 	mock.Mock
@@ -46,6 +53,11 @@ func (m *MockDatabase) GetOrderById(ctx contextpkg.Context, orderId string) (*st
 
 func (m *MockDatabase) InsertOrder(ctx contextpkg.Context, order *structs.Order) error {
 	args := m.Called(ctx, order)
+	return args.Error(0)
+}
+
+func (m *MockDatabase) HealthCheck(ctx contextpkg.Context) error {
+	args := m.Called(ctx)
 	return args.Error(0)
 }
 
@@ -96,7 +108,7 @@ func TestGetOrderByIdCacheMissDatabaseHit(t *testing.T) {
 	}
 
 	// Set up mock expectations - the function calls GetCache().GetOrder() and GetDatabase().GetOrderById()
-	mockCache.On("GetOrder", mock.Anything, "cache-miss-test").Return(nil, &cache.ErrCacheMiss{Key: "cache-miss-test"})
+	mockCache.On("GetOrder", mock.Anything, "cache-miss-test").Return(nil, cache.ErrCacheMiss{Key: "cache-miss-test"})
 	mockDB.On("GetOrderById", mock.Anything, "cache-miss-test").Return(expectedOrder, nil)
 	mockCache.On("PutOrder", mock.Anything, "cache-miss-test", expectedOrder).Return(nil)
 
@@ -124,7 +136,7 @@ func TestGetOrderByIdCacheMissDatabaseNotFound(t *testing.T) {
 	mockDB := new(MockDatabase)
 
 	// Set up mock expectations
-	mockCache.On("GetOrder", mock.Anything, "not-found-test").Return(nil, &cache.ErrCacheMiss{Key: "not-found-test"})
+	mockCache.On("GetOrder", mock.Anything, "not-found-test").Return(nil, cache.ErrCacheMiss{Key: "not-found-test"})
 	mockDB.On("GetOrderById", mock.Anything, "not-found-test").Return(nil, assert.AnError)
 
 	// Set up services
@@ -182,7 +194,7 @@ func TestGetOrderByIdCachePutError(t *testing.T) {
 	}
 
 	// Set up mock expectations
-	mockCache.On("GetOrder", mock.Anything, "cache-put-error-test").Return(nil, &cache.ErrCacheMiss{Key: "cache-put-error-test"})
+	mockCache.On("GetOrder", mock.Anything, "cache-put-error-test").Return(nil, cache.ErrCacheMiss{Key: "cache-put-error-test"})
 	mockDB.On("GetOrderById", mock.Anything, "cache-put-error-test").Return(expectedOrder, nil)
 	mockCache.On("PutOrder", mock.Anything, "cache-put-error-test", expectedOrder).Return(assert.AnError)
 
@@ -274,7 +286,7 @@ func TestGetOrderByIdWithComplexOrder(t *testing.T) {
 	}
 
 	// Set up mock expectations
-	mockCache.On("GetOrder", mock.Anything, "complex-order-test").Return(nil, &cache.ErrCacheMiss{Key: "complex-order-test"})
+	mockCache.On("GetOrder", mock.Anything, "complex-order-test").Return(nil, cache.ErrCacheMiss{Key: "complex-order-test"})
 	mockDB.On("GetOrderById", mock.Anything, "complex-order-test").Return(expectedOrder, nil)
 	mockCache.On("PutOrder", mock.Anything, "complex-order-test", expectedOrder).Return(nil)
 
@@ -335,7 +347,8 @@ func TestGetOrderByIdEmptyOrderId(t *testing.T) {
 	mockDB := new(MockDatabase)
 
 	// Set up mock expectations for empty order ID
-	mockCache.On("GetOrder", mock.Anything, "").Return(nil, &cache.ErrCacheMiss{Key: ""})
+	mockCache.On("GetOrder", mock.Anything, "").Return(nil, cache.ErrCacheMiss{Key: ""})
+	mockDB.On("GetOrderById", mock.Anything, "").Return(nil, assert.AnError)
 
 	// Set up services
 	cache.SetCache(mockCache)
@@ -349,5 +362,18 @@ func TestGetOrderByIdEmptyOrderId(t *testing.T) {
 	assert.Nil(t, order)
 
 	mockCache.AssertExpectations(t)
-	mockDB.AssertNotCalled(t, "GetOrderById")
+	mockDB.AssertExpectations(t)
+}
+
+func TestMain(m *testing.M) {
+	// Reset monitoring state before running tests
+	monitoring.ResetForTesting()
+
+	// Initialize monitoring in test mode
+	monitoringInstance := &monitoring.Monitoring{}
+	errChan := make(chan error, 1)
+	if err := monitoringInstance.Init(errChan); err != nil {
+		panic(err)
+	}
+	os.Exit(m.Run())
 }

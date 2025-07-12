@@ -15,6 +15,7 @@ type Message struct {
 
 type Broker interface {
 	StartConsuming(context.Context) chan Message
+	HealthCheck(context.Context) error
 }
 
 func SetBroker(broker Broker) {

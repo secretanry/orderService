@@ -65,3 +65,9 @@ func (c *MemoryCache) GetOrder(_ context.Context, key string) (*structs.Order, e
 	c.mutex.Unlock()
 	return elem.Value.(*entry).value, nil
 }
+
+// HealthCheck performs a health check on memory cache
+func (c *MemoryCache) HealthCheck(_ context.Context) error {
+	// Memory cache is always healthy if it's initialized
+	return nil
+}

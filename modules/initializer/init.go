@@ -8,6 +8,7 @@ import (
 	"wb-L0/modules/config"
 	"wb-L0/modules/graceful"
 	"wb-L0/modules/kafka"
+	"wb-L0/modules/monitoring"
 	"wb-L0/modules/pg"
 	"wb-L0/modules/redis"
 	"wb-L0/modules/server"
@@ -29,6 +30,7 @@ func Init() {
 	}
 	unitsList := []Initializable{
 		new(config.Config),
+		new(monitoring.Monitoring),
 		new(server.Server),
 	}
 	initUnits(unitsList)

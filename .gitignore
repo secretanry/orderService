@@ -1,3 +1,34 @@
-.idea
+# IDE files
+.idea/
+.vscode/
+
+# Environment files
 .env
-data
+monitoring.env
+test.env
+
+# Build artifacts
+wb-l0
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Data directories
+data/
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+
+# Coverage reports
+coverage.out
+coverage.html
+
+# Docker volumes
+docker_data/

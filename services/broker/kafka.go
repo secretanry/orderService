@@ -9,16 +9,23 @@ import (
 
 	kafka_lib "github.com/segmentio/kafka-go"
 
+	"wb-L0/modules/config"
 	"wb-L0/modules/kafka"
 )
 
 type KafkaBroker struct {
 	kafkaConn *kafka.Kafka
+	address   string
 }
 
 func NewKafkaBroker(kafkaInstance *kafka.Kafka) Broker {
+	address := config.GetConfig().KafkaUrl
+	if address == "" {
+		address = "localhost:9092"
+	}
 	return &KafkaBroker{
 		kafkaConn: kafkaInstance,
+		address:   address,
 	}
 }
 
@@ -135,4 +142,20 @@ func minDuration(a, b time.Duration) time.Duration {
 		return a
 	}
 	return b
+}
+
+// HealthCheck performs a health check on Kafka
+func (b *KafkaBroker) HealthCheck(ctx context.Context) error {
+	// Try to connect to Kafka and check if it's reachable
+	conn, err := kafka_lib.DialContext(ctx, "tcp", b.address)
+	if err != nil {
+		return fmt.Errorf("failed to connect to Kafka: %w", err)
+	}
+	defer conn.Close()
+	// Check if we can list topics (basic connectivity test)
+	_, err = conn.ReadPartitions()
+	if err != nil {
+		return fmt.Errorf("failed to read partitions: %w", err)
+	}
+	return nil
 }
