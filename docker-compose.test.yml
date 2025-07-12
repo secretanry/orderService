@@ -1,0 +1,52 @@
+services:
+  test-postgres:
+    image: postgres:16
+    container_name: test-postgres
+    environment:
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_pass
+      POSTGRES_DB: test_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - test_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test_user -d test_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  test-redis:
+    image: redis:8-alpine
+    container_name: test-redis
+    command: redis-server --requirepass test_pass --port 6379
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "test_pass", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  test-kafka:
+    build: ./kafka-configuration
+    container_name: test-kafka
+    user: "0:0"
+    ports:
+      - "9093:9092"
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://test-kafka:29092,PLAINTEXT_HOST://localhost:9093
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@test-kafka:9093
+    volumes:
+      - test_kafka_data:/tmp/kraft-combined-logs
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+      start_period: 30s
+
+volumes:
+  test_postgres_data:
+  test_kafka_data: 

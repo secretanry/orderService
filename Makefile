@@ -42,3 +42,25 @@ compose-down-dev:
 .PHONY: generate-swagger
 generate-swagger:
 	@swag init
+
+.PHONY: test-integration
+test-integration:
+	@chmod +x scripts/run_integration_tests.sh
+	@./scripts/run_integration_tests.sh
+
+
+.PHONY: test-unit
+test-unit:
+	@echo "Running unit tests only (excluding integration and docs)..."
+	@go test -v ./handlers
+
+.PHONY: test
+test: test-unit test-integration
+
+
+.PHONY: test-cleanup
+test-cleanup:
+	@echo "Cleaning up test environment..."
+	@docker-compose -f docker-compose.test.yml down -v
+	@docker volume prune -f
+	@echo "Test environment cleaned up"

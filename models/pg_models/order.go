@@ -43,6 +43,9 @@ func GetOrderById(db *gorm.DB, uid string) (*Order, error) {
 	if err != nil {
 		return nil, err
 	}
+	if order.Id == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
 	return order, nil
 }
 
